@@ -1,0 +1,102 @@
+{
+	"info": {
+		"_postman_id": "0899eeef-a4c5-430e-97de-122d6a20191f",
+		"name": "homework",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "6659722"
+	},
+	"item": [
+		{
+			"name": "Send message",
+			"protocolProfileBehavior": {
+				"disabledSystemHeaders": {}
+			},
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"userId\":\"XXXXXXXXXXXX\",\r\n    \"message\":\"test\"\r\n}"
+				},
+				"url": {
+					"raw": "localhost:10081/send",
+					"host": [
+						"localhost"
+					],
+					"port": "10081",
+					"path": [
+						"send"
+					],
+					"query": [
+						{
+							"key": "userId",
+							"value": "Uc2c1b4c3c051f822093038636a133703",
+							"disabled": true
+						},
+						{
+							"key": "message",
+							"value": "測試",
+							"disabled": true
+						}
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get all user",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "localhost:10081/user",
+					"host": [
+						"localhost"
+					],
+					"port": "10081",
+					"path": [
+						"user"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "Get user info",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "localhost:10081/user/Uf6b97bc87XXXXXXX",
+					"host": [
+						"localhost"
+					],
+					"port": "10081",
+					"path": [
+						"user",
+						"Uf6b97bc87XXXXXXX"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}

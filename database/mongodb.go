@@ -33,15 +33,3 @@ func MongoInit() {
 
 	MongoDB = MongoClient
 }
-
-func InsertUserInfo(db string, collection string, data interface{}) error {
-
-	dbcollection := MongoDB.Database(db).Collection(collection)
-
-	_, err := dbcollection.InsertOne(context.TODO(), data)
-	if err != nil {
-		return err
-	}
-
-	return nil
-}

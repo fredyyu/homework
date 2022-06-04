@@ -49,3 +49,11 @@ docker-compose down
 ```shell=
 docker-compose down -v
 ```
+
+### Build the service image
+
+At the homework root folder run the command
+
+```shell=
+$ docker build -t homework -f ./build/Dockerfile . --no-cache
+```

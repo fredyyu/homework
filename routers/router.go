@@ -3,27 +3,22 @@ package routers
 import (
 	"fmt"
 	"github.com/gin-gonic/gin"
-	"github.com/go-playground/validator/v10"
 	"github.com/line/line-bot-sdk-go/linebot"
 	"github.com/spf13/viper"
-	"homework/database"
+	"homework/models"
 	"log"
 	"net/http"
 )
 
 var client *linebot.Client
 
-type User struct {
-	UserId         string
-	Message        string
-	Name           string
-	PictureURL     string
-	ProfileMessage string
+type SendForm struct {
+	UserId  string `json:"userId" binding:"required"`
+	Message string `json:"message" binding:"required"`
 }
 
-type SendForm struct {
-	UserId  string `json:"userId" binding:required`
-	Message string `json:"message" binding:required`
+type UserForm struct {
+	UserId string `json:"userId" binding:"required"`
 }
 
 func InitRouter() *gin.Engine {
@@ -39,18 +34,14 @@ func InitRouter() *gin.Engine {
 	r.Use(gin.Logger())
 	r.Use(gin.Recovery())
 	r.NoMethod(func(c *gin.Context) {
-		c.JSON(http.StatusNotFound, map[string]interface{}{
-			"status": http.StatusNotFound,
-			"msg":    http.StatusText(http.StatusNotFound),
-			"data":   make([]interface{}, 0),
+		c.JSON(http.StatusMethodNotAllowed, map[string]interface{}{
+			"msg": http.StatusText(http.StatusMethodNotAllowed),
 		})
 	})
 
 	r.NoRoute(func(c *gin.Context) {
 		c.JSON(http.StatusNotFound, map[string]interface{}{
-			"status": http.StatusNotFound,
-			"msg":    http.StatusText(http.StatusNotFound),
-			"data":   make([]interface{}, 0),
+			"msg": http.StatusText(http.StatusNotFound),
 		})
 	})
 
@@ -60,7 +51,8 @@ func InitRouter() *gin.Engine {
 	})
 
 	r.POST("/send", send)
-	r.GET("/user", user)
+	r.GET("/user", getalluser)
+	r.GET("/user/:id", user)
 
 	return r
 }
@@ -94,7 +86,7 @@ func lineHandler(c *gin.Context) {
 					return
 				}
 
-				userInfo := User{userId, message.Text, res.DisplayName, res.PictureURL, res.StatusMessage}
+				userInfo := models.User{userId, message.Text, res.DisplayName, res.PictureURL, res.StatusMessage}
 				if event.Source.Type == "user" {
 					if _, err = client.ReplyMessage(event.ReplyToken, linebot.NewTextMessage(res.DisplayName+":"+message.Text)).Do(); err != nil {
 						log.Println(err.Error())
@@ -105,7 +97,7 @@ func lineHandler(c *gin.Context) {
 					}
 				}
 
-				err = database.InsertUserInfo("db", "user_info", userInfo)
+				err = models.InsertDataToDBCollection("db", "user_info", userInfo)
 				if err != nil {
 					fmt.Println(err.Error())
 					return
@@ -118,45 +110,65 @@ func lineHandler(c *gin.Context) {
 func send(c *gin.Context) {
 	form := new(SendForm)
 	if err, msg := bindandvalidate(c, form); err != nil {
-		c.JSON(http.StatusOK, map[string]interface{}{
-			"status": 100,
-			"msg":    msg,
-			"data":   make([]interface{}, 0),
+		c.JSON(http.StatusUnprocessableEntity, map[string]interface{}{
+			"msg": msg,
 		})
 		return
 	}
-	fmt.Println(form.UserId)
-	fmt.Println(form.Message)
+
 	_, err := client.PushMessage(form.UserId, linebot.NewTextMessage(form.Message)).Do()
 	if err != nil {
 		log.Printf("Send message to %s fail", form.UserId)
-		c.JSON(http.StatusOK, map[string]interface{}{
-			"status": 100,
-			"msg":    err.Error(),
-			"data":   make([]interface{}, 0),
+		c.JSON(http.StatusBadRequest, map[string]interface{}{
+			"msg": err.Error(),
 		})
 		return
 	}
 
 	c.JSON(http.StatusOK, map[string]interface{}{
-		"status": 0,
-		"msg":    "success",
-		"data":   make([]interface{}, 0),
+		"msg": "success",
 	})
 	return
 }
 
 func user(c *gin.Context) {
 
+	userId := c.Param("id")
+
+	userInfo, err := models.GetUserInfo(userId)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"msg": err.Error(),
+		})
+		return
+	}
+
+	if userInfo == nil {
+		c.JSON(http.StatusNotFound, map[string]interface{}{
+			"msg": "Not found by the user id",
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, userInfo)
+}
+
+func getalluser(c *gin.Context) {
+	users, err := models.GetAllUserInfo()
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, map[string]interface{}{
+			"msg": err.Error(),
+		})
+		return
+	}
+
+	c.JSON(http.StatusOK, users)
+
 }
 
 func bindandvalidate(c *gin.Context, form interface{}) (err error, msg string) {
 	if err = c.ShouldBindJSON(form); err != nil {
-		errs := err.(validator.ValidationErrors)
-		for _, fieldError := range errs {
-			msg = fieldError.Error()
-			return
-		}
+		msg = "Validator request form error : " + err.Error()
 	}
 	return
 }

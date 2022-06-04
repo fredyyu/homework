@@ -14,7 +14,9 @@ git clone https://github.com/fredyyu/homework.git
 2. Modify the `.env` content before start the service
 3. You can use `docker-compose config` to check your configuration
 
-### Boot up containers
+### Boot up database containers
+If you want compose with service, you have to adjust the docker-compose file.
+Add the related code for it, and build the image.
 
 ==Running in foreground==
 ```shell=
